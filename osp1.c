@@ -43,6 +43,11 @@ struct Machine {
 FILE* ProgramCard;
 FILE* LinePrinter;
 
+
+/**
+  Helper functions
+*/
+
 // Copies from B to A 4 bytes
 void assign(char* A, const char* B) {
   memcpy(A, B, 4);
@@ -59,8 +64,6 @@ int numb(char IR[4]) {
 }
 
 void memdump() {
-  // Executes the instruction pointed to by IC
-  // printf("Program loaded in meory\n");
   // Debug dump the program section of memory
   for(int i=0; i<20; i++) {
     printf("%d\t", i+1);
@@ -70,9 +73,8 @@ void memdump() {
     printf("\n");
   }
 }
+
 void mempeak(int n) {
-  // Executes the instruction pointed to by IC
-  // printf("peak at mem %d\n", n);
   // Debug dump the program section of memory
   for(int i=0; i<20; i++) {
     printf("%d\t", i+1);
@@ -83,6 +85,10 @@ void mempeak(int n) {
   }
 }
 
+
+/**
+  Module definations
+*/
 void LOAD() {
   // Loads input.txt
   char Buffer[45];
@@ -130,9 +136,7 @@ void LOAD() {
         i++;
       }
       rp+= i;
-      // load_program =0;
     }
-    // memdump();
   }
 }
 
@@ -163,22 +167,17 @@ void MOS() {
   if(M.SI == 1) READ();
   if(M.SI == 2) WRITE();
   if(M.SI == 3) TERMINATE(); 
-  // else
+
+  // controll flow returns to EUP
   // EUP();
 }
 
 void EUP() {
-
-  
-  // memdump();
-  // printf("%d", M.IC);
-
-  // while(1) {
-    // Fetch Intructino
+    // Fetch Intruction
     assign(M.IR, M.mem[M.IC]);
-    // printf("%c", M.IR[0]);
-    M.IC++;
 
+    // Increment the Instruction counter
+    M.IC++;
 
     // DECODE AND EXECUTE
     if(M.IR[0] == 'L') assign(M.R, M.mem[num(M.IR)]);
@@ -186,13 +185,10 @@ void EUP() {
     if(M.IR[0] == 'C') M.C = memcmp(M.mem[num(M.IR)], M.R, 4) == 0; 
     if(M.IR[0] == 'B') if(M.C) { M.IC = num(M.IR); M.C = 0; }
 
-    //
     if(M.IR[0] == 'H'){ M.SI=3; MOS(); return;}
     if(M.IR[0] == 'G'){ M.SI=1; MOS(); }
     if(M.IR[0] == 'P'){ M.SI=2; MOS(); }
-    // printf("flat %d %s %s\n", M.C, M.mem[num(M.IR)], M.R);
-  // }
-  EUP();
+    EUP();
 }
 
 void INIT() {
@@ -211,10 +207,10 @@ void TERMINATE() {
   fputc('\n', LinePrinter);
   fputc('\n', LinePrinter);
 
-  // printf("TERMINATE\n");
   INIT();
+
+  // Loads the next program if any
   LOAD();
-  // exit(0);
 }
 
 int main() {
