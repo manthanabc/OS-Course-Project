@@ -130,8 +130,9 @@ void LOAD() {
         i++;
       }
       rp+= i;
-      load_program =0;
+      // load_program =0;
     }
+    // memdump();
   }
 }
 
