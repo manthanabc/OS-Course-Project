@@ -15,7 +15,7 @@ the machine consists of a single 4 byte general purpose register R
 # Running
 assuming git is installed
 ```
-git clone http://github.com/manthanabc/OSCP1
+git clone https://github.com/manthanabc/OS-Course-Project
 cd OSCP1
 ./a.out
 ```
@@ -25,7 +25,7 @@ and the output will be stored in output.txt
 # Building
 requres some c compiler
 ```
-git clone http://github.com/manthanabc/OSCP1
+git clone https://github.com/manthanabc/OS-Course-Project
 cd OSCP1
 cc osp1.c
 ```
