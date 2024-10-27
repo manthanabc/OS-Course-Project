@@ -27,6 +27,7 @@ void INIT();
 void READ();
 void WRITE();
 void EUP();
+void MOS();
 void LOAD();
 void START();
 void TERMINATE(int);
@@ -34,8 +35,10 @@ void TERMINATE(int);
 int ALLOCATE();
 int ADDRESSMAP(int VA);
 
+
+// The virtual Machine
 struct Machine {
-  char mem[100][4];
+  char mem[300][4];
   char IR[4];
   char C;
   int IC;
@@ -45,6 +48,8 @@ struct Machine {
   int PI;
 } M;
 
+
+// Process controll block P
 struct PCB {
   int id;
   int TTL;
@@ -54,8 +59,13 @@ struct PCB {
   int PTR;
 } P;
 
+
+// IO cards
 FILE* ProgramCard;
 FILE* LinePrinter;
+
+// 32 Bit unsigned number to keep track of free frames in memory
+u_int32_t freebitmap = 0;
 
 
 /**
@@ -103,8 +113,8 @@ void mempeak(int n) {
 /**
   Module definations
 */
+// Loads input.txt
 void LOAD() {
-  // Loads input.txt
   char Buffer[45];
 
   int load_program =0;
@@ -118,9 +128,22 @@ void LOAD() {
          P.id = (Buffer[5]-'0')*100 + (Buffer[6]-'0')*10 + (Buffer[7]-'0');
          P.TTL = (Buffer[9]-'0')*100 + (Buffer[10]-'0')*10 + (Buffer[11]-'0');
          P.TLL = (Buffer[13]-'0')*100 + (Buffer[14]-'0')*10 + (Buffer[15]-'0');
+
+
+         // Allocate the Page table
+         P.PTR = ALLOCATE();
+         // for(int i=0; i<20; i++) {
+         //   M.mem[P.PTR+i][0] = 1;
+         //   M.mem[P.PTR+i][2] = '0' + i / 10;
+         //   M.mem[P.PTR+i][3] = '0' + i%10;
+         // }
+         // printf("PTR IS %d\n", P.PTR);
+         // mempeak(P.PTR);
          load_program=1;
        }
        if(Buffer[1] == 'D') {
+         // printf("PTR IS %d\n", P.PTR);
+         // mempeak(P.PTR);
          START();
          break;
        };
@@ -129,12 +152,20 @@ void LOAD() {
     }  
 
     if(load_program) {
+
+      // Allocate a program page
+      int add = ALLOCATE()/10;
+      char* t= M.mem[P.PTR+rp/10];
+      t[0] = 1;
+      t[2] = '0' + add/10;
+      t[3] = '0' + add%10;
+
       // Load the program
       char *r = Buffer;
       int l=0;
       int i=0;
       while(1) {
-        char *m = M.mem[rp+i];
+        char *m = M.mem[ADDRESSMAP(rp+i)];
         switch (*r) {
           case 'G' : l=4;break; // GD
           case 'P' : l=4;break; // PD
@@ -171,7 +202,8 @@ void READ() {
           TERMINATE(1); return;
         }
   
-  int mem = num(M.IR);
+  int mem = ADDRESSMAP(num(M.IR));
+  if(mem == -1){ M.PI= 3; MOS(); return;}
   int c=0;
   while(Buffer[c] != '\n' && c<40) {
     M.mem[mem+c/4][c%4] = Buffer[c];
@@ -184,7 +216,7 @@ void WRITE() {
   // Writes 40 bytes to output.txt (Line printer)
   if(P.LLC >= P.TLL) { TERMINATE(2); return; }
   P.LLC++;
-  int mem = num(M.IR);
+  int mem = ADDRESSMAP(num(M.IR));
   for(int i=0; i<10; i++) {
     for(int j=0; j<4; j++)
       fputc(M.mem[mem+i][j], LinePrinter);
@@ -197,59 +229,84 @@ void clearint() {
   //RESET INTERRUPTS
   M.SI = M.PI = M.TI = 0;
 }
+
+
+// ALLOCATES A PAGE IN MEMORY returns real address
+int ALLOCATE() {
+  int t = rand() % 30;
+  while(((freebitmap>>t)&1) == 1) t = rand() % 30;
+  freebitmap|=(1<<t);
+  return t*10;
+}
+
+
+// Maps Virtual Address to Real Address
+int ADDRESSMAP(int va) {
+  // return va;
+  // Page fault
+  if(M.mem[P.PTR + va/10][0] != 1) {
+    M.PI = 3;
+    return -1;
+  }
+
+  return num(M.mem[P.PTR+(va/10)])*10 + (va%10);
+}
+
+
 void MOS() {
+  if(M.SI == 3) TERMINATE(0); 
+  if(M.TI == 2) TERMINATE(3);
   if(M.SI == 1) READ();
   if(M.SI == 2) WRITE();
-  if(M.SI == 3) TERMINATE(0); 
-
-  if(M.TI == 2) TERMINATE(3);
   if(M.PI == 2) TERMINATE(5);
+  if(M.PI == 3) {
+    // printf("PAGEFAULT\n");
+    if((M.IR[0] == 'G' && M.IR[1] == 'D') || (M.IR[0] == 'S' && M.IR[1] == 'R')) {
+      M.IC--;
+      int nu = num(M.IR) /10;
+      int pagenum = ALLOCATE()/10;
+      M.mem[P.PTR+nu][0]=1;
+      M.mem[P.PTR+nu][2]=pagenum/10 + '0';
+      M.mem[P.PTR+nu][3]=pagenum%10 + '0';
+      // mempeak(P.PTR);
+      EUP();
+      return;
+    } 
+    TERMINATE(6);
+  }
 }
 
 void EUP() {
+    clearint();
     // Fetch Intruction
-    assign(M.IR, M.mem[M.IC]);
+    assign(M.IR, M.mem[ADDRESSMAP(M.IC)]);
     // Increment the Instruction counter
     M.IC++;
 
-    //SIMULATE
-    P.TTC ++;
-    clearint();
-    // if(P.TTC > P.TTL) {printf("e%d e%d\n", P.TTC, P.TTL); M.TI=2; MOS(); return; }
-    // // DECODE AND EXECUTE
-    // if(M.IR[0] == 'H'){ M.SI=3; MOS(); return; }
-    // if(M.IR[0] == 'G'){ M.SI=1; MOS(); return; }
-    // if(M.IR[0] == 'P'){ M.SI=2; MOS(); return; }
-
-    // if(P.TTC > P.TTL) M.TI=2;
-    // if(M.IR[0] == 'H'){ M.SI=3;
-    // } else if(M.IR[0] == 'G' && M.IR[1] == 'D') { M.SI=1;
-    // } else if(M.IR[0] == 'P' && M.IR[1] == 'D') { M.SI=2;
-    // } else if(M.IR[0] == 'L'){ assign(M.R, M.mem[num(M.IR)]);
-    // } else if(M.IR[0] == 'S'){ assign(M.mem[num(M.IR)], M.R);
-    // } else if(M.IR[0] == 'C'){ M.C = memcmp(M.mem[num(M.IR)], M.R, 4) == 0; 
-    // } else if(M.IR[0] == 'B'){ if(M.C) { M.IC = num(M.IR); M.C = 0; }
-    // } else { 
-    //   M.PI = 2;
-    // }
-
-    
-    if (P.TTC > P.TTL) M.TI = 2;
-
     if (M.IR[0] == 'H') M.SI = 3;
-    else if (M.IR[0] == 'G' && M.IR[1] == 'D') M.SI = 1;
-    else if (M.IR[0] == 'P' && M.IR[1] == 'D') M.SI = 2;
-    else if (M.IR[0] == 'L') assign(M.R, M.mem[num(M.IR)]);
-    else if (M.IR[0] == 'S') assign(M.mem[num(M.IR)], M.R);
-    else if (M.IR[0] == 'C') M.C = memcmp(M.mem[num(M.IR)], M.R, 4) == 0;
-    else if (M.IR[0] == 'B' && M.IR[1] =='T'){ if(M.C) { M.IC = num(M.IR); M.C = 0; } }
-    else M.PI = 2;
-
-    if(M.SI || M.TI || M.PI) {
+    // PreFetch operand address
+    int raad = ADDRESSMAP(num(M.IR));
+    if(M.PI) {
       MOS();
       return;
-    } 
-    EUP();
+    }
+    // SIMULAE
+    P.TTC ++;
+    if (P.TTC > P.TTL) M.TI = 2;
+
+    if (M.IR[0] == 'G' && M.IR[1] == 'D') M.SI = 1;
+    else if (M.IR[0] == 'P' && M.IR[1] == 'D') M.SI = 2;
+    else if (M.IR[0] == 'L' && M.IR[1] == 'R') assign(M.R, M.mem[raad]);
+    else if (M.IR[0] == 'S' && M.IR[1] == 'R') assign(M.mem[raad], M.R);
+    else if (M.IR[0] == 'C' && M.IR[1] == 'R') M.C = memcmp(M.mem[raad], M.R, 4) == 0;
+    else if (M.IR[0] == 'B' && M.IR[1] == 'T'){ if(M.C) { M.IC = num(M.IR); M.C = 0; } }
+    else M.PI = 2;
+
+
+    if(M.SI || M.TI || M.PI)
+      MOS();
+    else 
+      EUP();
 }
 
 void INIT() {
