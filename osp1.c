@@ -168,7 +168,6 @@ void MOS() {
   if(M.SI == 2) WRITE();
   if(M.SI == 3) TERMINATE(); 
 
-  // controll flow returns to EUP
   // EUP();
 }
 
