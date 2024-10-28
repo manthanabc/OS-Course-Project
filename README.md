@@ -15,8 +15,8 @@ the machine consists of a single 4 byte general purpose register R
 # Running
 assuming git is installed
 ```
-git clone http://github.com/manthanabc/OSCP1
-cd OSCP1
+git clone https://github.com/manthanabc/OS-Course-Project
+cd OS-Course-Project
 ./a.out
 ```
 write your batch jobs after $AMI section in input.txt
@@ -25,7 +25,8 @@ and the output will be stored in output.txt
 # Building
 requres some c compiler
 ```
-git clone http://github.com/manthanabc/OSCP1
-cd OSCP1
-cc osp1.c
+git clone https://github.com/manthanabc/OS-Course-Project
+cd OS-Course-Project
+cc osp1.c -o one
+cc osp2.c -o two
 ```
