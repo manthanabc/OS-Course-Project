@@ -326,6 +326,8 @@ void TERMINATE(int error_code) {
   // Log the Job ID
   fprintf(LinePrinter, "JOB ID\t:\t%d\n", P.id);
 
+  if(M.SI==3)P.TTC++;
+    
   // Log the error type
   switch(error_code) {
     case 0 : fputs(" NO ERROR\n", LinePrinter); break;
