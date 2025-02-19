@@ -191,7 +191,7 @@ void EUP() {
     if(M.IR[0] == 'L') assign(M.R, M.mem[num(M.IR)]);
     if(M.IR[0] == 'S') assign(M.mem[num(M.IR)], M.R);
     if(M.IR[0] == 'C') M.C = memcmp(M.mem[num(M.IR)], M.R, 4) == 0; 
-    if(M.IR[0] == 'B') if(M.C) { M.IC = num(M.IR); M.C = 0; }
+    if(M.IR[0] == 'B') if(M.C) { M.IC = num(M.IR)-1; M.C = 0; }
 
     if(M.IR[0] == 'H'){ M.SI=3; MOS(); return;}
     if(M.IR[0] == 'G'){ M.SI=1; MOS(); }
