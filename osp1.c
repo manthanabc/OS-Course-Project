@@ -116,6 +116,8 @@ void LOAD() {
       int i=0;
       while(1) {
         char *m = M.mem[rp+i];
+        char quite = 0;
+        // printf("%c", *r);
         switch (*r) {
           case 'G' : l=4;break; // GD
           case 'P' : l=4;break; // PD
@@ -124,18 +126,24 @@ void LOAD() {
           case 'C' : l=4;break; // CP
           case 'B' : l=4;break; // BT
           case 'H' : l=1;break; // H
+          default: quite=1;
+        }
+        if(quite) {
+          break;
         }
         if(*r == 'H'){
           *m = 'H';
-          break;
-        }
-        for(int i=0; i<l ;i++, r++) {
-          *(m+i) = *r;
-        }
+          r++;
+          // break;
+        } else 
+          for(int i=0; i<l ;i++, r++) {
+            *(m+i) = *r;
+          }
         if(i >= 10) break;
         i++;
       }
       rp+= i;
+      // memdump();
     }
   }
 }
@@ -153,6 +161,7 @@ void READ() {
 }
 
 void WRITE() {
+  // memdump();
   // Writes 40 bytes to output.txt (Line printer)
   int mem = num(M.IR);
   for(int i=0; i<10; i++) {
@@ -187,6 +196,9 @@ void EUP() {
     if(M.IR[0] == 'H'){ M.SI=3; MOS(); return;}
     if(M.IR[0] == 'G'){ M.SI=1; MOS(); }
     if(M.IR[0] == 'P'){ M.SI=2; MOS(); }
+
+    // printf("After %s, Flag is: %d, R is %s\n", M.IR, M.C, M.R);
+    
     EUP();
 }
 
