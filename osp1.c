@@ -114,10 +114,9 @@ void LOAD() {
       char *r = Buffer;
       int l=0;
       int i=0;
+      char quit = 0;
       while(1) {
         char *m = M.mem[rp+i];
-        char quite = 0;
-        // printf("%c", *r);
         switch (*r) {
           case 'G' : l=4;break; // GD
           case 'P' : l=4;break; // PD
@@ -126,11 +125,10 @@ void LOAD() {
           case 'C' : l=4;break; // CP
           case 'B' : l=4;break; // BT
           case 'H' : l=1;break; // H
-          default: quite=1;
+          default: quit = 1;
         }
-        if(quite) {
-          break;
-        }
+        if(quit) break;
+
         if(*r == 'H'){
           *m = 'H';
           r++;

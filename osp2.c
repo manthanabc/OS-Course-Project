@@ -164,6 +164,7 @@ void LOAD() {
       char *r = Buffer;
       int l=0;
       int i=0;
+      char quit = 0;
       while(1) {
         char *m = M.mem[ADDRESSMAP(rp+i)];
         switch (*r) {
@@ -174,7 +175,10 @@ void LOAD() {
           case 'C' : l=4;break; // CP
           case 'B' : l=4;break; // BT
           case 'H' : l=1;break; // H
+          default: quit = 1;
         }
+        if(quit) break;
+
         if(*r == 'H'){
           *m = 'H';
           break;
@@ -299,7 +303,7 @@ void EUP() {
     else if (M.IR[0] == 'L' && M.IR[1] == 'R') assign(M.R, M.mem[raad]);
     else if (M.IR[0] == 'S' && M.IR[1] == 'R') assign(M.mem[raad], M.R);
     else if (M.IR[0] == 'C' && M.IR[1] == 'R') M.C = memcmp(M.mem[raad], M.R, 4) == 0;
-    else if (M.IR[0] == 'B' && M.IR[1] == 'T'){ if(M.C) { M.IC = num(M.IR); M.C = 0; } }
+    else if (M.IR[0] == 'B' && M.IR[1] == 'T'){ if(M.C) { M.IC = num(M.IR)-1; M.C = 0; } }
     else M.PI = 2;
 
 
