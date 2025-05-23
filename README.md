@@ -19,4 +19,4 @@ BT
 
 virtual machine consists of 400 bytes of ram split into 100 words (ram is a word (4byte) addresible) 
 the machine consists of a single 4 byte general purpose register R
-Refer Readme.md in phase1 branch to view compiling/ running instructions
+Refer Readme.md in phase1 branch to view compiling/ running instructions. 
